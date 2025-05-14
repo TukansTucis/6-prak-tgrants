@@ -1,5 +1,4 @@
 $(document).ready(function() {
-
     const $amountInput = $('#amount');
     const $fromCurrencySelect = $('#fromCurrency');
     const $toCurrencySelect = $('#toCurrency');
@@ -40,7 +39,6 @@ $(document).ready(function() {
             updateHistoryChart();
 
             showLoadingMessage($messageArea, '');
-
         } catch (error) {
             console.error("Initialization failed:", error);
             displayErrorMessage($messageArea, `Error: ${error.message}. Please try reloading.`);
@@ -55,12 +53,12 @@ $(document).ready(function() {
             dataType: 'json'
         }).fail(function(jqXHR, textStatus, errorThrown) {
             console.error("AJAX error:", textStatus, errorThrown, jqXHR.responseText);
-             let errorMsg = `API request failed: ${textStatus}`;
-             if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                 errorMsg += ` - ${jqXHR.responseJSON.message}`;
-             } else if (errorThrown) {
-                 errorMsg += ` - ${errorThrown}`;
-             }
+            let errorMsg = `API request failed: ${textStatus}`;
+            if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                errorMsg += ` - ${jqXHR.responseJSON.message}`;
+            } else if (errorThrown) {
+                errorMsg += ` - ${errorThrown}`;
+            }
             throw new Error(errorMsg);
         });
     }
@@ -200,8 +198,8 @@ $(document).ready(function() {
             return;
         }
 
-        if (from === currentChartFrom && to === currentChartTo && /* duration unchanged condition needed */ false) {
-             return;
+        if (from === currentChartFrom && to === currentChartTo && false) {
+            return;
         }
 
         currentChartFrom = from;
@@ -225,7 +223,6 @@ $(document).ready(function() {
 
             renderChart(labels, dataPoints, from, to);
             showLoadingMessage($chartMessageDiv, '');
-
         } catch (error) {
             console.error("Failed to update history chart:", error);
             displayErrorMessage($chartMessageDiv, `Error loading chart: ${error.message}`);
@@ -265,51 +262,32 @@ $(document).ready(function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                 scales: {
+                scales: {
                     x: {
-                        type: 'time',
-                        time: {
-                            unit: inferTimeUnit(labels),
-                            tooltipFormat: 'll',
-                            displayFormats: {
-                               day: 'MMM d', week: 'MMM d', month: 'MMM yyyy', year: 'yyyy',
-                            }
-                        },
                         title: { display: true, text: 'Date' },
-                        grid: { display: false },
-                        ticks: { autoSkip: true, maxRotation: 0, maxTicksLimit: 7 }
+                        ticks: { maxRotation: 45, minRotation: 30 },
+                        grid: { display: true }
                     },
                     y: {
-                        title: { display: true, text: `Rate (1 ${from} = X ${to})` },
-                         grid: { color: '#e9ecef' }
+                        title: { display: true, text: `1 ${from} in ${to}` },
+                        ticks: { beginAtZero: false, callback(value) { return value.toFixed(4); } },
+                        grid: { display: true }
                     }
                 },
-                plugins: {
-                    tooltip: { mode: 'index', intersect: false, backgroundColor: '#212529' },
-                    legend: { display: false }
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
                 },
-                hover: { mode: 'index', intersect: false },
-                animation: { duration: 300 }
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                }
             }
         });
     }
 
     function clearChart() {
-        if (historyChart) {
-            historyChart.destroy();
-            historyChart = null;
-        }
+        const ctx = $chartCanvas[0].getContext('2d');
+        ctx.clearRect(0, 0, $chartCanvas.width(), $chartCanvas.height());
     }
-
-    function inferTimeUnit(labels) {
-         if (!labels || labels.length < 2) return 'day';
-         const start = moment(labels[0]);
-         const end = moment(labels[labels.length - 1]);
-         const diffDays = end.diff(start, 'days');
-
-        if (diffDays > 365 * 2) return 'year';
-        if (diffDays > 180) return 'month';
-        return 'day';
-    }
-
 });
